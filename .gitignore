@@ -1,0 +1,12 @@
+# vs code stuff
+.vscode/.ropeproject
+.vscode
+
+# python stuff
+__pycache__
+
+#mypy stuff
+.mypy_cache
+
+# project specific
+out/
