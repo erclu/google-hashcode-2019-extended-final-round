@@ -46,3 +46,33 @@ class TargetFile:
     @classmethod
     def from_row(cls, row: str) -> TargetFile:
         return cls(*row.split(" "))
+
+
+@attr.s(slots=True, auto_attribs=True)
+class Server:
+    number: int = attr.ib(converter=int)
+    available_files: tp.Set[CompiledFile] = attr.ib(default=attr.Factory(set))
+
+
+@attr.s(slots=True, frozen=True, auto_attribs=True)
+class Step:
+    compiled_file: CompiledFile
+    server: Server
+
+
+@attr.s(slots=True, auto_attribs=True)
+class CompilationSteps:
+    steps: tp.List[Step] = attr.ib(default=attr.Factory(list), init=False)
+    score: int = attr.ib(default=0, init=False)
+    targets: tp.Set[TargetFile] = attr.ib(default=attr.Factory(set))
+
+    def add_step(self, step: Step) -> None:
+        self.steps.append(step) #pylint: disable=no-member
+
+    def save(self, outfile: Path) -> None:
+        submission_rows: tp.List[str] = ["{}".format(len(self.steps))] + [
+          "{} {}".format(x.compiled_file.name, x.server.number)
+          for x in self.steps #pylint: disable=not-an-iterable
+        ]
+
+        outfile.write_text("\n".join(submission_rows))

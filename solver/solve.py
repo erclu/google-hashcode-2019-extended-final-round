@@ -8,7 +8,7 @@ from . import model
 
 def parse_file(filename: Path) -> tp.Tuple[tp.List[model.CompiledFile],
                                            tp.List[model.TargetFile],
-                                           int,
+                                           tp.List[model.Server],
                                            ]:
     lines: tp.List[str] = filename.read_text(encoding="UTF-8").split("\n")[:-1]
 
@@ -34,15 +34,19 @@ def parse_file(filename: Path) -> tp.Tuple[tp.List[model.CompiledFile],
       for row in tqdm(target_files_raw, ascii=True)
     ]
 
-    return compiled_files, target_files, servers_number
+    servers: tp.List[model.Server] = [
+      model.Server(x) for x in range(servers_number)
+    ]
+
+    return compiled_files, target_files, servers
 
 
 def _solve(filename: Path) -> None:
-    compiled_files, target_files, servers_number = parse_file(filename)
+    compiled_files, target_files, servers = parse_file(filename)
 
     print(*compiled_files, sep="\n")
     print(*target_files, sep="\n")
-    print(servers_number)
+    print(*servers, sep="\n")
 
 
 def main(files: tp.List[Path]) -> None:
