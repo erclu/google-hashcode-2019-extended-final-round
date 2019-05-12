@@ -1,14 +1,14 @@
 import typing as tp
 from pathlib import Path
 
+import networkx as nx
 from tqdm import tqdm
 
-from . import model
 
-
-def parse_file(filename: Path) -> tp.Tuple[tp.List[model.CompiledFile],
-                                           tp.List[model.TargetFile],
-                                           tp.List[model.Server],
+def parse_file(filename: Path) -> tp.Tuple[tp.List[str],
+                                           tp.List[str],
+                                           tp.List[str],
+                                           int,
                                            ]:
     lines: tp.List[str] = filename.read_text(encoding="UTF-8").split("\n")[:-1]
 
@@ -21,32 +21,71 @@ def parse_file(filename: Path) -> tp.Tuple[tp.List[model.CompiledFile],
 
     assert len(lines) == comp_files_number*2 + target_files_number
 
-    comp_files_raw: tp.List[str] = lines[:comp_files_number*2]
-    target_files_raw: tp.List[str] = lines[-target_files_number:]
+    raw_compiled_files: tp.List[str] = lines[:comp_files_number*2 - 1:2]
+    raw_dependencies_list: tp.List[str] = lines[1:comp_files_number*2:2]
+    raw_target_files: tp.List[str] = lines[-target_files_number:]
 
-    compiled_files: tp.List[model.CompiledFile] = [
-      model.CompiledFile.from_rows(x, y)
-      for x, y in zip(comp_files_raw[:-1:2], comp_files_raw[1::2])
-    ]
+    return (
+      raw_compiled_files,
+      raw_dependencies_list,
+      raw_target_files,
+      servers_number,
+    )
 
-    target_files: tp.List[model.TargetFile] = [
-      model.TargetFile.from_row(row)
-      for row in tqdm(target_files_raw, ascii=True)
-    ]
 
-    servers: tp.List[model.Server] = [
-      model.Server(x) for x in range(servers_number)
-    ]
+def build_graph(
+  raw_compiled_files: tp.List[str],
+  raw_dependencies_list: tp.List[str],
+  raw_target_files: tp.List[str],
+) -> nx.DiGraph:
+    dep_graph: nx.DiGraph = nx.DiGraph()
 
-    return compiled_files, target_files, servers
+    for compiled_file, dependencies in tqdm(zip(
+      raw_compiled_files, raw_dependencies_list), ascii=True):
+
+        name, compilation_time, replication_time = compiled_file.split(" ")
+        dep_graph.add_node(
+          name,
+          props={
+            "compilation_time": compilation_time,
+            "replication_time": replication_time,
+            "is_target": False,
+          },
+        )
+        if len(dependencies) > 2:
+            destinations = dependencies[2:].split(" ")
+            for dependency in destinations:
+                dep_graph.add_edge(name, dependency)
+
+    for target_file in raw_target_files:
+        name, deadline, goal_points = target_file.split(" ")
+
+        dep_graph.nodes[name]["props"]["is_target"] = True
+        dep_graph.nodes[name]["props"]["deadline"] = deadline
+        dep_graph.nodes[name]["props"]["goal_points"] = goal_points
+
+    return dep_graph
 
 
 def _solve(filename: Path) -> None:
-    compiled_files, target_files, servers = parse_file(filename)
+    (
+      raw_compiled_files,
+      raw_dependencies_list,
+      raw_target_files,
+      servers_number,
+    ) = parse_file(filename)
 
-    print(*compiled_files, sep="\n")
-    print(*target_files, sep="\n")
-    print(*servers, sep="\n")
+    dep_graph = build_graph(
+      raw_compiled_files, raw_dependencies_list, raw_target_files
+    )
+
+    targets = list(
+      filter(
+        lambda x: dep_graph.nodes[x]["props"]["is_target"], dep_graph.nodes
+      )
+    )
+
+    print(*list(dep_graph.nodes[x]["props"] for x in targets), sep="\n")
 
 
 def main(files: tp.List[Path]) -> None:

@@ -12,6 +12,7 @@ yapf = "*"
 [packages]
 attrs = "*"
 tqdm = "*"
+networkx = "*"
 
 [requires]
 python_version = "3.7"
