@@ -4,6 +4,8 @@ from pathlib import Path
 import networkx as nx
 from tqdm import tqdm
 
+from . import model
+
 
 def parse_file(filename: Path) -> tp.Tuple[tp.List[str],
                                            tp.List[str],
@@ -46,11 +48,8 @@ def build_graph(
         name, compilation_time, replication_time = compiled_file.split(" ")
         dep_graph.add_node(
           name,
-          props={
-            "compilation_time": compilation_time,
-            "replication_time": replication_time,
-            "is_target": False,
-          },
+          props=model.CompiledFileProps(compilation_time, replication_time),
+          is_target=False
         )
         if len(dependencies) > 2:
             destinations = dependencies[2:].split(" ")
@@ -60,9 +59,12 @@ def build_graph(
     for target_file in raw_target_files:
         name, deadline, goal_points = target_file.split(" ")
 
-        dep_graph.nodes[name]["props"]["is_target"] = True
-        dep_graph.nodes[name]["props"]["deadline"] = deadline
-        dep_graph.nodes[name]["props"]["goal_points"] = goal_points
+        props: model.CompiledFileProps = dep_graph.nodes[name]["props"]
+
+        dep_graph.nodes[name]["props"] = model.TargetFileProps(
+          props.compilation_time, props.replication_time, deadline, goal_points
+        )
+        dep_graph.nodes[name]["is_target"] = True
 
     return dep_graph
 
@@ -80,12 +82,13 @@ def _solve(filename: Path) -> None:
     )
 
     targets = list(
-      filter(
-        lambda x: dep_graph.nodes[x]["props"]["is_target"], dep_graph.nodes
-      )
+      filter(lambda x: dep_graph.nodes[x]["is_target"], dep_graph.nodes)
     )
 
-    print(*list(dep_graph.nodes[x]["props"] for x in targets), sep="\n")
+    print(
+      *list(x + ": " + str(dep_graph.nodes[x]["props"]) for x in targets),
+      sep="\n"
+    )
 
 
 def main(files: tp.List[Path]) -> None:

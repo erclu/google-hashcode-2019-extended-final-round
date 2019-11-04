@@ -4,10 +4,10 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+black="*"
 mypy = "*"
 pylint = "*"
 rope = "*"
-yapf = "*"
 
 [packages]
 attrs = "*"
@@ -16,3 +16,6 @@ networkx = "*"
 
 [requires]
 python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true

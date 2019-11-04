@@ -12,10 +12,7 @@
       "pipfile.lock": false,
     },
     "python.analysis.openFilesOnly": false,
-    "python.linting.mypyEnabled": true,
-    "python.linting.pylintEnabled": true,
-    "python.testing.pyTestEnabled": false,
-    "python.pythonPath": "C:\\Users\\Luca\\.virtualenvs\\hashcode-fr-vGiDlopC\\Scripts\\python.exe",
+    "python.testing.pytestEnabled": false,
     "python.terminal.activateEnvironment": true,
   }
 }

@@ -1,4 +1,4 @@
-﻿[MASTER]
+[MASTER]
 
 # A comma-separated list of package or module names from where C extensions may
 # be loaded. Extensions are loading into the active Python interpreter and may
@@ -22,7 +22,12 @@ jobs=1
 
 # List of plugins (as comma separated values of python modules names) to load,
 # usually to register additional checkers.
-load-plugins=
+load-plugins=pylint.extensions.docparams,
+            pylint.extensions.mccabe
+
+# Design checker plugin complexity value
+max-complexity=7
+
 
 # Pickle collected data for later comparisons.
 persistent=yes
